@@ -223,6 +223,9 @@ app.get('*', (req, res, next) => {
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/term' });
+wss.on('error', () => {}); // ws re-emits the http server's errors; start() below handles them
+
+const terms = new Set(); // live PTYs, killed on shutdown so the port is freed cleanly
 
 wss.on('connection', (ws) => {
   if (!pty) {
@@ -246,8 +249,9 @@ wss.on('connection', (ws) => {
     ws.close();
     return;
   }
+  terms.add(term);
   term.onData((d) => { if (ws.readyState === ws.OPEN) ws.send(d); });
-  term.onExit(() => ws.close());
+  term.onExit(() => { terms.delete(term); ws.close(); });
   ws.on('message', (msg) => {
     const s = msg.toString();
     if (s.startsWith('\x00RESIZE:')) {
@@ -260,14 +264,73 @@ wss.on('connection', (ws) => {
   ws.on('close', () => { try { term.kill(); } catch {} });
 });
 
-server.listen(PORT, () => {
-  const url = `http://localhost:${PORT}`;
+// ---------------------------------------------------------------------------
+// Startup — never die with a bare EADDRINUSE. If the lab is already running,
+// just reopen it; if something else owns the port, move to the next free one.
+// ---------------------------------------------------------------------------
+
+function openBrowser(url) {
+  if (process.env.LAB_NO_OPEN) return;
+  const opener = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+  spawn(opener, [url], { stdio: 'ignore', detached: true }).on('error', () => {});
+}
+
+function isLabRunningOn(port) {
+  return new Promise((resolve) => {
+    const req = http.get({ host: '127.0.0.1', port, path: '/api/meta', timeout: 1500 }, (res) => {
+      let body = '';
+      res.on('data', (d) => (body += d));
+      res.on('end', () => {
+        try { resolve(JSON.parse(body).title === 'Chai aur Docker'); } catch { resolve(false); }
+      });
+    });
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => { req.destroy(); resolve(false); });
+  });
+}
+
+function start(port, attempt = 0) {
+  server.once('error', async (err) => {
+    if (err.code !== 'EADDRINUSE') throw err;
+    const url = `http://localhost:${port}`;
+    if (await isLabRunningOn(port)) {
+      console.log('');
+      console.log('  ☕ Chai aur Docker Lab is already running');
+      console.log(`  Opening ${url}`);
+      console.log('  (to restart it, stop the other `npm start` with Ctrl+C first)');
+      console.log('');
+      openBrowser(url);
+      process.exit(0);
+    }
+    if (attempt >= 10) {
+      console.error(`[lab] ports ${PORT}-${port} are all busy. Free one, or run: PORT=5000 npm start`);
+      process.exit(1);
+    }
+    console.warn(`[lab] port ${port} is in use by another program — trying ${port + 1}`);
+    start(port + 1, attempt + 1);
+  });
+
+  server.listen(port);
+}
+
+server.on('listening', () => {
+  const url = `http://localhost:${server.address().port}`;
   console.log('');
   console.log('  ☕ Chai aur Docker Lab');
   console.log(`  Brewing at ${url}`);
   console.log('');
-  if (!process.env.LAB_NO_OPEN) {
-    const opener = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-    spawn(opener, [url], { stdio: 'ignore', detached: true }).on('error', () => {});
-  }
+  openBrowser(url);
 });
+
+// Ctrl+C / kill: close terminals and the socket so the port is released at once.
+function shutdown() {
+  for (const t of terms) { try { t.kill(); } catch {} }
+  for (const c of wss.clients) { try { c.terminate(); } catch {} }
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 1000).unref();
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+process.on('SIGHUP', shutdown);
+
+start(PORT);
