@@ -7,7 +7,7 @@
     "start": "node --disable-warning=ExperimentalWarning server/index.js",
     "postinstall": "node -e \"try{const fs=require('fs');fs.readdirSync('node_modules/node-pty/prebuilds').forEach(d=>{const p='node_modules/node-pty/prebuilds/'+d+'/spawn-helper';if(fs.existsSync(p))fs.chmodSync(p,0o755)})}catch(e){}\"",
     "test-all": "bash instructor/test-all.sh",
-    "clean": "bash scripts/clean-all.sh",
+    "clean": "bash scripts/clean-all.sh"
 
   },
   "dependencies": {
