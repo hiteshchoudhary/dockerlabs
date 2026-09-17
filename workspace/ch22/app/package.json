@@ -1,0 +1,9 @@
+{
+  "name": "chaicode-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tiny landing page server for the compose watch chapter",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

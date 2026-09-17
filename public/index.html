@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chai aur Docker — Lab</title>
+<link rel="icon" type="image/png" href="/assets/brand/chai-mascot-light.png">
+<script>
+  // apply the saved theme before first paint to avoid a flash
+  (function () {
+    var t = localStorage.getItem('cad-theme');
+    if (!t) t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/vendor/xterm/css/xterm.css">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<!-- ══════════ Welcome ══════════ -->
+<div id="welcome">
+  <div class="welcome-inner">
+    <img class="welcome-mascot mascot" src="/assets/brand/chai-mascot-light.png" alt="Chai aur Docker">
+    <h1 class="welcome-title">Chai <em>aur</em> Docker</h1>
+    <p class="welcome-tag eyebrow">A practical Docker book · with a live lab</p>
+    <p class="welcome-copy">
+      A Docker book by <strong>Hitesh</strong> that you don't just read — every chapter
+      ends in a real exercise, done in a real terminal, verified against your real Docker.
+      From your first container to images, networking, Compose, production hardening,
+      and running AI workloads, entirely on your machine.
+    </p>
+    <div class="welcome-features">
+      <span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5l3 3 7-7"/></svg>46 chapters · 11 parts</span>
+      <span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5l3 3 7-7"/></svg>Runs 100% locally</span>
+      <span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5l3 3 7-7"/></svg>No cloud, no signup</span>
+    </div>
+    <button id="welcome-cta" class="btn btn-hot btn-lg">Start reading →</button>
+    <p class="welcome-foot">Your terminal, your Docker. Progress is saved in this browser.</p>
+  </div>
+</div>
+
+<!-- ══════════ App ══════════ -->
+<div id="app" hidden>
+  <aside id="sidebar">
+    <div class="brand" id="brand" title="Back to contents">
+      <img class="mascot" src="/assets/brand/chai-mascot-light.png" alt="">
+      <div class="brand-text">
+        <div class="brand-name">Chai <em>aur</em> Docker</div>
+        <div class="brand-sub">Practical book · Live lab</div>
+      </div>
+    </div>
+
+    <div id="tray">
+      <div class="tray-head">
+        <span class="eyebrow">Progress</span>
+        <span id="tray-pct"></span>
+      </div>
+      <div id="glasses" title="One glass per part — completed exercises fill it"></div>
+      <div class="progress-bar"><i id="progress-fill"></i></div>
+      <div id="tray-stats"></div>
+    </div>
+
+    <nav id="modules" aria-label="Chapters"></nav>
+
+    <div class="sidebar-foot">
+      <div id="doctor-pill" class="pill"><span class="dot"></span><span class="pill-text">checking docker…</span></div>
+      <button id="palette-open" class="kbd-hint" title="Jump to any chapter">⌘K</button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <header id="topbar">
+      <div id="crumbs"></div>
+      <div class="topbar-actions">
+        <div class="seg" id="mode-toggle" hidden title="Chapter is the full read. Exercise cuts to the work.">
+          <button data-mode="story">Chapter</button>
+          <button data-mode="task">Exercise</button>
+        </div>
+        <button id="progress-reset" class="icon-btn" title="Reset progress">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        </button>
+        <button id="theme-btn" class="icon-btn" title="Toggle light / dark">
+          <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+        <button id="term-btn" class="icon-btn on" title="Toggle terminal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 15h5"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div id="docker-banner" hidden>
+      <div class="banner-inner">
+        <span class="banner-flame">🐳</span>
+        <div class="banner-text">
+          <strong>Docker is down.</strong>
+          The daemon isn't answering — start Docker Desktop, give it a moment, then retry.
+        </div>
+        <button id="banner-retry" class="btn btn-ghost">Retry</button>
+      </div>
+    </div>
+
+    <div id="episode-scroll">
+      <article id="episode"></article>
+    </div>
+
+    <div id="term-drawer">
+      <div id="term-handle" title="Drag to resize"></div>
+      <div class="term-bar">
+        <span class="term-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-5-6-5M12 19h8"/></svg>
+          lab terminal — workspace/
+        </span>
+        <button id="term-toggle" class="term-btn" title="Collapse terminal">Collapse</button>
+      </div>
+      <div id="terminal"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ══════════ Command palette ══════════ -->
+<div id="palette" hidden>
+  <div class="palette-box">
+    <input id="palette-input" type="text" placeholder="Jump to a chapter…" autocomplete="off" spellcheck="false">
+    <div id="palette-list"></div>
+  </div>
+</div>
+
+<!-- ══════════ Confirm dialog ══════════ -->
+<div id="confirm" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-body"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="/vendor/marked/marked.min.js"></script>
+<script src="/vendor/xterm/lib/xterm.js"></script>
+<script src="/vendor/addon-fit/lib/addon-fit.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

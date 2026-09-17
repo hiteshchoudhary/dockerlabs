@@ -1,0 +1,9 @@
+{
+  "name": "chai-34-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChaiCode API — chapter 34 (the audit)",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

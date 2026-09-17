@@ -1,0 +1,6 @@
+# Chapter 44 scaffold — trivial "api" image. The interesting part is the bake file YOU write.
+FROM alpine
+ARG APP_VERSION=dev
+LABEL com.chaicode.version=$APP_VERSION
+LABEL com.chaicode.role="api"
+CMD ["echo", "chai-44 api ready"]

@@ -1,0 +1,13 @@
+{
+  "name": "chai-08-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChaiCode API with one real dependency, so npm install matters",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ms": "^2.1.3"
+  }
+}

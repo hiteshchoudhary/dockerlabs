@@ -1,0 +1,6 @@
+# Chapter 44 scaffold — trivial "worker" image. The interesting part is the bake file YOU write.
+FROM alpine
+ARG APP_VERSION=dev
+LABEL com.chaicode.version=$APP_VERSION
+LABEL com.chaicode.role="worker"
+CMD ["echo", "chai-44 worker ready"]

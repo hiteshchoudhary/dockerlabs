@@ -1,0 +1,9 @@
+{
+  "name": "chai-ch41-api",
+  "version": "1.0.0",
+  "description": "Tiny API used in Chapter 41 (Dev Containers) — no external deps",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

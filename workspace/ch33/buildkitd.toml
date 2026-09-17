@@ -1,0 +1,8 @@
+# BuildKit daemon config for the chapter-33 builder.
+#
+# The chapter's registry (chai-33-registry, port 8133) speaks plain HTTP —
+# BuildKit refuses to push to non-TLS registries unless told otherwise.
+# The builder is created with host networking (--driver-opt network=host),
+# so "localhost:8133" inside the builder reaches the published registry port.
+[registry."localhost:8133"]
+  http = true

@@ -1,0 +1,9 @@
+{
+  "name": "chai-30-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChaiCode API — chapter 30 (non-root containers)",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
